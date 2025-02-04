@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Danny's Poll Voting App</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/react@17/umd/react.production.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/babel-standalone@6/babel.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-image: url('./images/Dizplai_background_image.png');
+            background-size: cover;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: blue;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: darkblue;
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="root"></div>
+<script type="text/babel">
+    function PollApp() {
+        const [poll, setPoll] = React.useState(null);
+        const [results, setResults] = React.useState(null);
+        const [selectedOption, setSelectedOption] = React.useState(null);
+
+        React.useEffect(() => {
+            axios.get("http://localhost:8080/polls/active").then((response) => {
+                setPoll(response.data);
+            });
+        }, []);
+
+        const handleVote = () => {
+            if (selectedOption !== null) {
+                axios.post(`http://localhost:8080/polls/vote?optionIndex=${selectedOption}`)
+                    .then((response) => {
+                        setResults(response.data);
+                    });
+            }
+        };
+
+        return (
+            <div>
+                <h1>Poll</h1>
+                {poll ? (
+                    <div>
+                        <h2>{poll.question}</h2>
+                        <ul>
+                            {poll.options.map((option, index) => (
+                                <li key={index}>
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            name="poll"
+                                            value={index}
+                                            onChange={() => setSelectedOption(index)}
+                                        />
+                                        {option}
+                                    </label>
+                                </li>
+                            ))}
+                        </ul>
+                        <button onClick={handleVote}>Vote</button>
+                    </div>
+                ) : (
+                    <p>Loading poll...</p>
+                )}
+
+                {results && (
+                    <div>
+                        <h3>Results:</h3>
+                        <ul>
+                            {Object.entries(results).map(([option, percentage], index) => (
+                                <li key={index}>{option}: {percentage.toFixed(2)}%</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    ReactDOM.render(<PollApp/>, document.getElementById("root"));
+</script>
+</body>
+</html>
